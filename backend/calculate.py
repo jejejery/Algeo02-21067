@@ -4,7 +4,7 @@ import cv2
 from time import *
 from sklearn import preprocessing
 
-dir = r'C:\\Users\\ASUS\\Documents\\Programming\\Python\\Algeo02-21067\\dataset\\train\\5\\BnW'
+dir = r'C:\\Users\\ASUS\\Documents\\Programming\\Python\\Algeo02-21067\\dataset\\train'
 
 
 def labelimg(dir):
@@ -15,18 +15,41 @@ def labelimg(dir):
     return label
 
 def norm_img(image):
-    newimg = np.delete(image,[1,2],2)
-    return newimg.reshape(256*256)
+    dim = (256,256)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    resized = cv2.resize(gray, dim, interpolation = cv2.INTER_AREA)
+    return resized.reshape(256*256)
 
-def set_training(dir):
-    training = np.ndarray(shape=(25,256*256))
+def get_test(dir):
     res = os.listdir(dir)
+    dim = (256, 256)
+    test_set = np.ndarray(shape=(len(res),256*256))
     ctr = 0
     for k in res:
-        img = norm_img(cv2.imread(dir+'\\'+k))
-        training[ctr] = img
+        image = cv2.imread(dir+'\\'+k)
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        resized = cv2.resize(gray, dim, interpolation = cv2.INTER_AREA)
+        test_set[ctr] = resized.reshape(256*256)
+        ctr += 1
+    return test_set
+
+    
+
+def set_training(dir):
+    dim = (256,256)
+    res = os.listdir(dir)
+    training = np.ndarray(shape=(len(res),256*256))
+    ctr = 0
+    for k in res:
+        image = cv2.imread(dir+'\\'+k)
+        rshp = norm_img(image)
+        training[ctr] = rshp
         ctr += 1
     return training
+
+
+def plus():
+    return 2
 
 def avg_image(dir):
     res = os.listdir(dir)
@@ -41,9 +64,9 @@ def avg_image(dir):
 
 
 def A_Matrix(dir):
-    A = np.ndarray(shape=(25, 256*256))
     avg = avg_image(dir)
     res = os.listdir(dir)
+    A = np.ndarray(shape=(len(res), 256*256))
     ctr = 0
     for k in res:
         img = norm_img(cv2.imread(dir+'\\'+k)) - avg
@@ -66,15 +89,49 @@ def eigenSort(eigenval,eigenvec):
     eigvectors_sort = [eig_pairs[index][1] for index in range(len(eigenval))]
     return eigvalues_sort,eigvectors_sort
 
-def eigenValMinorCoff(M,iterasi):
+def eigenValQR(M,iterasi):
+    Y = np.array(M)
     for i in range(iterasi):
-        Q, R = np.linalg.qr(M)
-        M = R @ Q
+        Q, R = np.linalg.qr(M)#QR_decomposition(M)
+        M = R @ Q #np.dot(R,Q)
     return np.diag(M)
 
 
 
+def proj(u, v):
+    v_norm_squared = sum(v**2)   
+    
+    proj_of_u_on_v = (np.dot(u, v)/v_norm_squared)*v
+    return proj_of_u_on_v
 
+def cosine_sim(a,b):
+    return abs(np.dot(a,b)/(np.linalg.norm(a)*np.linalg.norm(b)))
+
+# def gram_schmidt(Q):
+#     lenRow = Q.shape[0] #Panjang vektornya 4
+#     lenCol = Q.shape[1] #Banyak vektornya 3
+#     newQ = np.array(Q.T)
+#     X = np.ndarray(shape=(lenCol, lenRow), dtype=float)
+    
+    
+#     for i in range(lenCol):
+#         Y =  np.array(newQ[i])
+        
+#         if((i != 0)):
+#             for j in range(i):
+#                 Y -= proj(newQ[i], X[j])
+#         X[i] = Y
+        
+
+#     for i in range(lenCol):
+#         X[i] = X[i]/np.linalg.norm(X[i])
+#     return X
+
+# def QR_decomposition(A):
+#     Z = np.array(A)
+#     Q = gram_schmidt(Z)
+#     R = np.dot(Q, A)
+#     return Q.T, R 
 
 
     
