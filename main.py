@@ -3,9 +3,10 @@ import tkinter.messagebox
 import customtkinter
 from PIL import ImageTk, Image
 from tkinter import filedialog as fd
+import cv2 
 
-customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
-customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
+customtkinter.set_appearance_mode("System")  
+customtkinter.set_default_color_theme("blue") 
 
 
 class App(customtkinter.CTk):
@@ -18,13 +19,13 @@ class App(customtkinter.CTk):
 
         self.title("Face Recognition using Eigen Faces")
         self.geometry(f"{App.WIDTH}x{App.HEIGHT}")
-        self.protocol("WM_DELETE_WINDOW", self.on_closing)  # call .on_closing() when app gets closed
-
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)  
         self.testImage = None
+        self.cap = None
 
-        # ============ create two frames ============
+        # Terdiri atas 2 frame
 
-        # configure grid layout (2x1)
+        # Konfigurasi Awal Frame kanan dan kiri
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
@@ -37,7 +38,7 @@ class App(customtkinter.CTk):
         self.imageUNDEF = ImageTk.PhotoImage((Image.open("./Algeo02-21067/no-image.png")).resize((512, 512), Image.ANTIALIAS))
         self.frame_right.grid(row=0, column=1, sticky="nswe", padx=20, pady=20)
 
-        # ============ frame_left ============
+        # Konfigurasi frame kiri
 
         # configure grid layout (1x11)
         self.frame_left.grid_rowconfigure(0, weight=1)   # empty row with minsize as spacing
@@ -155,7 +156,7 @@ class App(customtkinter.CTk):
                                                 text_color="white",
                                                 fg_color="#1f6aa5",  
                                                 state="normal",
-                                                command=self.openTestImage)
+                                                command=self.openDataset)
         self.button_5.grid(row=2, column=0, columnspan=1, pady=20, padx=20, sticky="we")
 
         self.label_1i = customtkinter.CTkLabel(master=self.frame_input,
@@ -216,15 +217,36 @@ class App(customtkinter.CTk):
         self.button_5.configure(fg_color="#1f6aa5")
         self.button_6.configure(fg_color="#1f6aa5")
         self.button_7.configure(fg_color="#1f6aa5")
+        self.cap.release()
+        self.label_info_1.configure(image=self.imageUNDEF)
+        self.label_infot1.configure(text="Your Test Image")
+
     
     def movetoCamera(self):
         self.label_radio_group.configure(text="Look at Camera")
+        self.label_infot1.configure(text="Camera Preview")
         self.button_5.configure(state="disabled")
         self.button_6.configure(state="disabled")
         self.button_7.configure(state="disabled")
         self.button_5.configure(fg_color=None)
         self.button_6.configure(fg_color=None)
         self.button_7.configure(fg_color=None)
+        width, height = 1080, 512
+        self.cap = cv2.VideoCapture(0)
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+
+        def show_frame():
+            _, frame = self.cap.read()
+            frame = cv2.flip(frame, 1)
+            cv2image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
+            img = Image.fromarray(cv2image)
+            imgtk = ImageTk.PhotoImage(image=img)
+            self.label_info_1.imgtk = imgtk
+            self.label_info_1.configure(image=imgtk)
+            self.label_info_1.after(10, show_frame)
+        show_frame()
+
 
     def openTestImage(self):
         filetypes = (
@@ -232,19 +254,37 @@ class App(customtkinter.CTk):
             ('PNG Files', '*.png')
         )
         filename = fd.askopenfilename(
-            title='Open a file',
+            title='Open Test Image',
             initialdir='/',
             filetypes=filetypes
         )
-        self.imageTest = ImageTk.PhotoImage((Image.open(filename)).resize((512, 512), Image.ANTIALIAS))
-        self.label_info_1.configure(image=self.imageTest)
-
-        filenameshow = ""
-        lenname = len(filename)-1
-        while (filename[lenname] != '/'):
-            filenameshow = filename[lenname] + filenameshow
-            lenname = lenname-1
-        self.label_2i.configure(text=filenameshow)
+        
+        if filename :
+            self.imageTest = ImageTk.PhotoImage((Image.open(filename)).resize((512, 512), Image.ANTIALIAS))
+            self.label_info_1.configure(image=self.imageTest)
+            filenameshow = ""
+            lenname = len(filename)-1
+            while (filename[lenname] != '/'):
+                filenameshow = filename[lenname] + filenameshow
+                lenname = lenname-1
+            self.label_2i.configure(text=filenameshow)
+    
+    def openDataset(self):
+        filetypes = (
+            ('ZIP Files', '*.zip'),
+        )
+        filename = fd.askopenfilename(
+            title='Open Dataset',
+            initialdir='/',
+            filetypes=filetypes
+        )
+        if filename:
+            filenameshow = ""
+            lenname = len(filename)-1
+            while (filename[lenname] != '/'):
+                filenameshow = filename[lenname] + filenameshow
+                lenname = lenname-1
+            self.label_1i.configure(text=filenameshow)
 
 
     def change_appearance_mode(self, new_appearance_mode):
