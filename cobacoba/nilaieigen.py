@@ -9,8 +9,8 @@ def proj(u, v):
     return proj_of_u_on_v
 
 def gram_schmidt(Q):
-    lenRow = Q.shape[0] #Panjang vektornya 4
-    lenCol = Q.shape[1] #Banyak vektornya 3
+    lenRow = Q.shape[0] 
+    lenCol = Q.shape[1] 
     newQ = Q.T
     X = np.ndarray(shape=(lenCol, lenRow), dtype=float)
     
@@ -32,14 +32,18 @@ def QR_decomposition(A):
     Z = np.array(A)
     Q = gram_schmidt(Z)
     R = np.dot(Q, A)
-    return Q.T, R      
+    return normNearZero(Q.T,1e-15), normNearZero(R,1e-15)
+
+def normNearZero(A, epsilon):
+    A.real[abs(A.real) < epsilon]  = 0
+    return A
 
 
-Q = np.array([[1.0,2.0,3.0],[-1.0,1.0,1.0],[1.0,1.0,1.0],[1.0,1.0,1.0]])
+A = np.array([[1.0,2.0,3.0],[-1.0,1.0,1.0],[1.0,1.0,1.0],[1.0,1.0,1.0]])
   
 
-Q,R = QR_decomposition(Q)
-tic = t.time()
+Q,R = QR_decomposition(A)
+Qi,eR = np.linalg.qr(A)
 print("+++++++++++++++++=")
 print("NILAI Q: ")
 print(Q)
@@ -47,8 +51,14 @@ print("+++++++++++++++++=")
 print("NILAI R: ")
 print(R)
 print("+++++++++++++++++=")
-toc = t.time()
-print("Waktu eksekusi: ", toc-tic)
+
+print("+++++++++++++++++=")
+print("NILAI Qi: ")
+print(Qi)
+print("+++++++++++++++++=")
+print("NILAI eR: ")
+print(eR)
+
 
 
  

@@ -4,6 +4,7 @@ import customtkinter
 from PIL import ImageTk, Image
 from tkinter import filedialog as fd
 import cv2 
+from backend.calculate import *
 
 customtkinter.set_appearance_mode("System")  
 customtkinter.set_default_color_theme("blue") 
@@ -35,7 +36,7 @@ class App(customtkinter.CTk):
         self.frame_left.grid(row=0, column=0, sticky="nswe")
 
         self.frame_right = customtkinter.CTkFrame(master=self)
-        self.imageUNDEF = ImageTk.PhotoImage((Image.open("./Algeo02-21067/no-image.png")).resize((512, 512), Image.ANTIALIAS))
+        self.imageUNDEF = ImageTk.PhotoImage((Image.open("no-image.png")).resize((512, 512), Image.ANTIALIAS))
         self.frame_right.grid(row=0, column=1, sticky="nswe", padx=20, pady=20)
 
         # Konfigurasi frame kiri
@@ -262,6 +263,7 @@ class App(customtkinter.CTk):
         if filename :
             self.imageTest = ImageTk.PhotoImage((Image.open(filename)).resize((512, 512), Image.ANTIALIAS))
             self.label_info_1.configure(image=self.imageTest)
+            self.imageTestGrayscale = get_img(filename)
             filenameshow = ""
             lenname = len(filename)-1
             while (filename[lenname] != '/'):

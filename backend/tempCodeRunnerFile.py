@@ -1,18 +1,11 @@
-z = 0
-for k in weight_0:
-    ctr = 0
-    mark = 0
-    for i in w_base:
-        if ctr == 0:
-            euclidian_distance = np.linalg.norm(k-i)
-            cos_sim = cosine_sim(k,i)
-        else:
-            if np.linalg.norm(k-i) < euclidian_distance:
-                euclidian_distance = np.linalg.norm(k-i)
-                mark = ctr
-                cos_sim = cosine_sim(k,i)
-        ctr += 1
-    print(f"yang sesuai dengan dataset: {label_training[mark]}")
-    print(f"label test {z}: {label_test[z]}")
-    print(f"cosine similiarity: {cos_sim}")
-    z+= 1
+eigfaces = np.array(get_eigenfaces(eigenvec,40))
+
+
+# a = eigfaces[0].reshape(256,256)
+# a = np.interp(a, (a.min(), a.max()), (0, 256))
+# img = (a).reshape(256,256).astype('uint8')
+
+# grayImage = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+
+# cv2.imshow('image',grayImage)
+# cv2.waitKey(0)

@@ -15,43 +15,17 @@ label_test = labelimg(tesdir)
 A = A_Matrix(dir)
 kov = covariance(A)
 #Bagian yang harus kita kulik sendiri, ga boleh pakai library linear algebra
-eigenvalues, eigenvectors, = eigen(kov)
-#tic = time()
-# eigvalfromQR = eigenValQR(kov,20)
-
-# print("EigenVal from np: ")
-# print(np.sort(eigenvalues))
-# print("Eigen val hasil nguli ndiri: ")
-# print(np.sort(eigvalfromQR))
-# toc = time()
-# print(f"WAKTUNYA:{toc-tic}")
-
-# Sort the eigen pairs in descending order:
-
+eigenvalues, eigenvectors, = theEigen(kov,50)
 eigenvalues, eigenvectors = eigenSort(eigenvalues,eigenvectors)
+eigenfaces = get_eigenfaces(eigenvectors,20) #20 Eigenfaces terbanyak
+w_base = get_weight(eigenfaces,A)
 
-# print('Eigenvectors of Cov(X): \n%s' %eigvectors_sort)
-# print('\nEigenvalues of Cov(X): \n%s' %eigvalues_sort)
-
-
-# ------------------------#
-# Menampilkan EigenFace
-
-reduced_data = np.array(eigenvectors[:20]).transpose()
-
-training_tensor = set_training(dir)
-proj_data = np.dot(training_tensor.T,reduced_data)
-proj_data = proj_data.T
-print(proj_data.shape)
-
-w_base = np.array([np.dot(proj_data,i) for i in A])
-print(w_base.shape)
-# #TESTING
+# # #TESTING# # #
 test = get_test(tesdir)
-# print(test)
 avg = avg_image(dir)
 norm_test = test - avg
 
+# recon = avg + np.dot(w_base[1, :],proj_data)
 # kov_test = covariance(norm_test)
 # eigenvalues, eigenvectors, = eigen(kov_test)
 # eigenvalues, eigenvectors = eigenSort(eigenvalues,eigenvectors)
@@ -64,7 +38,7 @@ norm_test = test - avg
 
 
 
-weight_0 = np.array([np.dot(proj_data,i) for i in test])
+weight_0 = np.array([np.dot(eigenfaces,i) for i in norm_test])
 
 z = 0
 for k in weight_0:
@@ -83,7 +57,11 @@ for k in weight_0:
     print(f"yang sesuai dengan dataset: {label_training[mark]}")
     print(f"label test {z}: {label_test[z]}")
     print(f"euclidian distance: {euclidian_distance}")
+    print(f"cos_sim: {cos_sim}")
+    print("++++++++++++++++++++++++++++")
     z+= 1
+
+
 
 
 
@@ -102,7 +80,7 @@ for k in weight_0:
 
 #MENAMPILKAN EXAMPLE EIGENFACE
 #img = proj_data[4].reshape(256,256).astype('uint8')
-# a = norm_test[4].reshape(256,256)
+# a = (proj_data[2]).reshape(256,256)
 # a = np.interp(a, (a.min(), a.max()), (0, 256))
 # img = (a).reshape(256,256).astype('uint8')
 

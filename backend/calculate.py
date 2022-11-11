@@ -4,6 +4,7 @@ import cv2
 from time import *
 from sklearn import preprocessing
 
+
 dir = r'C:\\Users\\ASUS\\Documents\\Programming\\Python\\Algeo02-21067\\dataset\\train'
 
 
@@ -33,6 +34,12 @@ def get_test(dir):
         ctr += 1
     return test_set
 
+def get_img(img):
+    dim = (256, 256)
+    image = cv2.imread(img)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    resized = cv2.resize(gray, dim, interpolation = cv2.INTER_AREA)
+    return resized.reshape(256*256)
     
 
 def set_training(dir):
@@ -48,8 +55,6 @@ def set_training(dir):
     return training
 
 
-def plus():
-    return 2
 
 def avg_image(dir):
     res = os.listdir(dir)
@@ -60,8 +65,6 @@ def avg_image(dir):
     
     return s/(len(res))
     
-
-
 
 def A_Matrix(dir):
     avg = avg_image(dir)
@@ -79,7 +82,7 @@ def A_Matrix(dir):
 def covariance(A):
     return A @ A.T
 
-def eigen(C):
+def eigenNP(C):
     return np.linalg.eig(C)
 
 def eigenSort(eigenval,eigenvec):
@@ -89,12 +92,16 @@ def eigenSort(eigenval,eigenvec):
     eigvectors_sort = [eig_pairs[index][1] for index in range(len(eigenval))]
     return eigvalues_sort,eigvectors_sort
 
-def eigenValQR(M,iterasi):
+def theEigen(M,iterasi):
+    vec = np.identity(M.shape[0])
     Y = np.array(M)
     for i in range(iterasi):
-        Q, R = np.linalg.qr(M)#QR_decomposition(M)
-        M = R @ Q #np.dot(R,Q)
-    return np.diag(M)
+        Q, R = QR_decomposition(Y)
+        Y = R @ Q #np.dot(R,Q)
+        vec = vec @ Q
+    
+
+    return Y.diagonal(),vec 
 
 
 
@@ -107,35 +114,40 @@ def proj(u, v):
 def cosine_sim(a,b):
     return abs(np.dot(a,b)/(np.linalg.norm(a)*np.linalg.norm(b)))
 
-# def gram_schmidt(Q):
-#     lenRow = Q.shape[0] #Panjang vektornya 4
-#     lenCol = Q.shape[1] #Banyak vektornya 3
-#     newQ = np.array(Q.T)
-#     X = np.ndarray(shape=(lenCol, lenRow), dtype=float)
-    
-    
-#     for i in range(lenCol):
-#         Y =  np.array(newQ[i])
-        
-#         if((i != 0)):
-#             for j in range(i):
-#                 Y -= proj(newQ[i], X[j])
-#         X[i] = Y
-        
+def get_eigenfaces(eigenvectors,n):
+    reduced_data = np.array(eigenvectors[:n]).transpose()
+    training_tensor = set_training(dir)
+    eigenface = np.dot(training_tensor.T,reduced_data)
+    return eigenface.T
 
-#     for i in range(lenCol):
-#         X[i] = X[i]/np.linalg.norm(X[i])
-#     return X
+def get_weight(eigenfaces,norm_training_set):
+    return np.array([np.dot(eigenfaces,k) for k in norm_training_set])
 
-# def QR_decomposition(A):
-#     Z = np.array(A)
-#     Q = gram_schmidt(Z)
-#     R = np.dot(Q, A)
-#     return Q.T, R 
+def proj(u, v):
+    v_norm_squared = sum(v**2)   
+    
+    proj_of_u_on_v = (np.dot(u, v)/v_norm_squared)*v
+    return proj_of_u_on_v
 
 
+
+
+def QR_decomposition(M, type='float64'):
     
+    M = np.array(M, dtype=type)
+    (m,n) = np.shape(M)
+
+    Q = np.array(M, dtype=type)      
+    R = np.zeros((n, n), dtype=type)
+
+    for k in range(n):
+        for i in range(k):
+            R[i,k] = np.transpose(Q[:,i]).dot(Q[:,k])
+            Q[:,k] = Q[:,k] - R[i,k] * Q[:,i]
+
+        R[k,k] = np.linalg.norm(Q[:,k]); Q[:,k] = Q[:,k] / R[k,k]
     
+    return -Q, -R   
 
 
 #print(w.shape)
