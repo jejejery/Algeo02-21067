@@ -7,6 +7,39 @@ from sklearn import preprocessing
 
 dir = r'C:\\Users\\ASUS\\Documents\\Programming\\Python\\Algeo02-21067\\dataset\\train'
 
+def metrics_calculation(test,training,label_training):
+    
+    #Menghitung kovarians dari data training
+    avg = avg_image_1(training)
+    A = training - avg
+    kov = covariance(A)
+
+    #Normalisasi test
+    norm_test = test - avg
+
+    #menghitung eigenface
+    eigval, eigenvec = theEigen(kov,100)
+    eigval, eigenvec = eigenSort(eigval,eigenvec)
+    eigenvec = np.array(eigenvec)
+    x = int(training.shape[0]*0.75)
+    eigfaces = np.array(get_eigenfaces_1(eigenvec,x,training)) #75%
+    w_base = get_weight(eigfaces,A)
+    w_0 = np.dot(eigfaces,norm_test)
+
+    ctr = 0
+    mark = 0
+    for i in w_base:
+        if ctr == 0:
+            euclidian_distance = np.linalg.norm(w_0-i)
+            cos_sim = cosine_sim(w_0,i)
+        else:
+            if np.linalg.norm(w_0-i) < euclidian_distance:
+                euclidian_distance = np.linalg.norm(w_0-i)
+                mark = ctr
+                cos_sim = cosine_sim(w_0,i)
+        ctr += 1
+    return euclidian_distance, cos_sim, label_training[mark]
+
 
 def labelimg(dir):
     label = []
@@ -54,7 +87,12 @@ def set_training(dir):
         ctr += 1
     return training
 
-
+def avg_image_1(training_set):
+    s = np.zeros((256*256))
+    for k in range(training_set.shape[0]):
+        s = s + training_set[k]
+    
+    return s/(training_set.shape[0])
 
 def avg_image(dir):
     res = os.listdir(dir)
@@ -65,6 +103,8 @@ def avg_image(dir):
     
     return s/(len(res))
     
+
+
 
 def A_Matrix(dir):
     avg = avg_image(dir)
@@ -82,7 +122,7 @@ def A_Matrix(dir):
 def covariance(A):
     return A @ A.T
 
-def eigenNP(C):
+def eigen(C):
     return np.linalg.eig(C)
 
 def eigenSort(eigenval,eigenvec):
@@ -113,6 +153,17 @@ def proj(u, v):
 
 def cosine_sim(a,b):
     return abs(np.dot(a,b)/(np.linalg.norm(a)*np.linalg.norm(b)))
+
+def get_eigenfaces(eigenvectors,n):
+    reduced_data = np.array(eigenvectors[:n]).transpose()
+    training_tensor = set_training(dir)
+    eigenface = np.dot(training_tensor.T,reduced_data)
+    return eigenface.T
+
+def get_eigenfaces_1(eigenvectors,n,training_tensor):
+    reduced_data = np.array(eigenvectors[:n]).transpose()
+    eigenface = np.dot(training_tensor.T,reduced_data)
+    return eigenface.T
 
 def get_eigenfaces(eigenvectors,n):
     reduced_data = np.array(eigenvectors[:n]).transpose()

@@ -6,6 +6,7 @@ from tkinter import filedialog as fd
 import cv2 
 from backend.calculate import *
 import zipfile
+import time as t
 
 customtkinter.set_appearance_mode("System")  
 customtkinter.set_default_color_theme("blue") 
@@ -24,8 +25,10 @@ class App(customtkinter.CTk):
         self.protocol("WM_DELETE_WINDOW", self.on_closing)  
         self.testImage = None
         self.cap = None
-        self.dataset = []
-
+        self.dataset_display = []
+        self.dataset_train = np.array([])
+        self.train_label = []
+        self.imageTestGrayscale = np.ndarray(shape=(256*256))
         # Terdiri atas 2 frame
 
         # Konfigurasi Awal Frame kanan dan kiri
@@ -205,12 +208,37 @@ class App(customtkinter.CTk):
                                               text_font=("Roboto Medium", -8))  # font name and size in px
         self.label_4.grid(row=12, column=0, pady=0, padx=10)
 
+        self.label_5 = customtkinter.CTkLabel(master=self.frame_input,
+                                              text="",
+                                              text_font=("Roboto Medium", -8))  # font name and size in px
+        self.label_5.grid(row=13, column=0, pady=0, padx=10)
+
 
         # set default values
         self.optionmenu_1.set("Dark")
 
     def button_event(self):
-        print("Button pressed")
+        tic = t.time()
+        euclidian_distance, cos_sim, label = metrics_calculation(self.imageTestGrayscale,self.dataset_train,self.train_label)
+        ctr = 0
+        for k in self.train_label:
+            if k == label:
+                break
+            ctr += 1
+        toc = t.time()
+        
+        ext_time ="Execution time: " + str(toc-tic) + "s"
+        euclidian_distance = "Euclidian distance: " + str(euclidian_distance)
+        cos_sim = "Cosine Similiarity: " + str(cos_sim)
+
+        self.label_info_2.configure(image=self.dataset_display[ctr])
+        self.label_4.configure(text = euclidian_distance)
+        self.label_5.configure(text = cos_sim)
+        self.label_infot3.configure(text = ext_time)
+        
+        
+
+    
 
     def movetoFiles(self):
         self.label_radio_group.configure(text="Input Your Files")
@@ -280,26 +308,38 @@ class App(customtkinter.CTk):
         filetypes = (
             ('ZIP Files', '*.zip'),
         )
-        self.dataset = []
+        
+        self.dataset_display = []
         filename = fd.askopenfilename(
             title='Open Dataset',
             initialdir='/',
             filetypes=filetypes
         )
         
+
         if filename:
             filezip = zipfile.ZipFile(filename)
             listfile = filezip.namelist()
+            self.dataset_train = np.ndarray(shape=(len(listfile),256*256))
+
+            ctr = 0
             for itemfile in listfile:
-                self.dataset.append(ImageTk.PhotoImage(Image.open(filezip.open(itemfile)).resize((512, 512), Image.ANTIALIAS)))
-            self.label_info_1.configure(image=self.dataset[0])
-            self.label_info_2.configure(image=self.dataset[1])
-            filenameshow = ""
-            lenname = len(filename)-1
-            while (filename[lenname] != '/'):
-                filenameshow = filename[lenname] + filenameshow
-                lenname = lenname-1
-            self.label_1i.configure(text=filenameshow)
+                self.dataset_display.append(ImageTk.PhotoImage(Image.open(filezip.open(itemfile)).resize((512, 512), Image.ANTIALIAS)))
+                x = filezip.open(itemfile)
+                pic = norm_img(np.array(Image.open(x)))
+                self.dataset_train[ctr] = pic
+                ctr += 1
+
+            self.train_label = listfile
+            # self.label_info_1.configure(image=self.dataset[0])
+            # self.label_info_2.configure(image=self.dataset[1])
+            # filenameshow = ""
+            # lenname = len(filename)-1
+            # while (filename[lenname] != '/'):
+            #     filenameshow = filename[lenname] + filenameshow
+            #     lenname = lenname-1
+            self.label_1i.configure(text="Zip Loaded!")
+            
 
 
     def change_appearance_mode(self, new_appearance_mode):

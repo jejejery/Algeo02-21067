@@ -4,7 +4,7 @@ from sklearn import preprocessing
 from calculate import *
 #from sklearn.metrics.pairwise import cosine_similarity
 
-dir = r'C:\\Users\\ASUS\\Documents\\Programming\\Python\\Algeo02-21067\\dataset\\train'
+dir = "C:\\Users\\ASUS\\Documents\\Programming\\Python\\Algeo02-21067\\dataset\\train"
 tesdir = r'C:\\Users\\ASUS\\Documents\\Programming\\Python\\Algeo02-21067\\dataset\\test'
 
 label_training = labelimg(dir)
@@ -18,7 +18,7 @@ kov = covariance(A)
 
 
 # #Bagian yang harus kita kulik sendiri, ga boleh pakai library linear algebra
-eigenvalues, eigenvectors, = eigenNP(kov)
+# eigenvalues, eigenvectors, = eigenNP(kov)
 eigval, eigenvec = theEigen(kov,100)
 # print("eigenvector from fucntion: ")
 # print(eigenvec)
@@ -26,6 +26,7 @@ eigval, eigenvec = theEigen(kov,100)
 # print(eigenvectors)
 
 eigval, eigenvec = eigenSort(eigval,eigenvec)
+print(np.array(eigenvec).shape)
 eigfaces = np.array(get_eigenfaces(eigenvec,50))
 
 
