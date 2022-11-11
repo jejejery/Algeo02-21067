@@ -4,6 +4,7 @@ import customtkinter
 from PIL import ImageTk, Image
 from tkinter import filedialog as fd
 import cv2 
+import zipfile
 
 customtkinter.set_appearance_mode("System")  
 customtkinter.set_default_color_theme("blue") 
@@ -22,6 +23,7 @@ class App(customtkinter.CTk):
         self.protocol("WM_DELETE_WINDOW", self.on_closing)  
         self.testImage = None
         self.cap = None
+        self.dataset = []
 
         # Terdiri atas 2 frame
 
@@ -217,7 +219,9 @@ class App(customtkinter.CTk):
         self.button_5.configure(fg_color="#1f6aa5")
         self.button_6.configure(fg_color="#1f6aa5")
         self.button_7.configure(fg_color="#1f6aa5")
-        self.cap.release()
+        if self.cap != None:
+            self.cap.release()
+            self.cap = None
         self.label_info_1.configure(image=self.imageUNDEF)
         self.label_infot1.configure(text="Your Test Image")
 
@@ -231,20 +235,21 @@ class App(customtkinter.CTk):
         self.button_5.configure(fg_color=None)
         self.button_6.configure(fg_color=None)
         self.button_7.configure(fg_color=None)
-        width, height = 1080, 512
         self.cap = cv2.VideoCapture(0)
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1080)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 
         def show_frame():
             _, frame = self.cap.read()
             frame = cv2.flip(frame, 1)
             cv2image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
             img = Image.fromarray(cv2image)
-            imgtk = ImageTk.PhotoImage(image=img)
+            imgw, imgh = img.size
+            imgtk = ImageTk.PhotoImage(image=img.crop([imgw/2-256, imgh/2-256, imgw/2+256, imgh/2+256]))
             self.label_info_1.imgtk = imgtk
             self.label_info_1.configure(image=imgtk)
             self.label_info_1.after(10, show_frame)
+
         show_frame()
 
 
@@ -273,12 +278,20 @@ class App(customtkinter.CTk):
         filetypes = (
             ('ZIP Files', '*.zip'),
         )
+        self.dataset = []
         filename = fd.askopenfilename(
             title='Open Dataset',
             initialdir='/',
             filetypes=filetypes
         )
+        
         if filename:
+            filezip = zipfile.ZipFile(filename)
+            listfile = filezip.namelist()
+            for itemfile in listfile:
+                self.dataset.append(ImageTk.PhotoImage(Image.open(filezip.open(itemfile)).resize((512, 512), Image.ANTIALIAS)))
+            self.label_info_1.configure(image=self.dataset[0])
+            self.label_info_2.configure(image=self.dataset[1])
             filenameshow = ""
             lenname = len(filename)-1
             while (filename[lenname] != '/'):
