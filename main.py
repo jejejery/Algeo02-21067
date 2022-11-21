@@ -280,42 +280,26 @@ class App(customtkinter.CTk):
             self.cap.release()
             self.cap = None
         self.label_info_1.configure(image=self.imageUNDEF)
+        self.label_info_2.configure(image=self.imageUNDEF)
         self.label_infot1.configure(text="Your Test Image")
         self.state = False
 
     
     def movetoCamera(self):
-        self.label_radio_group.configure(text="Look at Camera")
-        self.label_infot1.configure(text="Camera Preview")
-        self.button_5.configure(state="normal")
-        self.button_6.configure(state="disabled")
-        self.button_7.configure(state="normal")
-        self.button_5.configure(fg_color="#1f6aa5")
-        self.button_6.configure(fg_color=None)
-        self.button_7.configure(fg_color="#1f6aa5")
-        self.button_7.configure(command=self.button_force)
-        self.label_info_1.configure(image=self.imageUNDEF)
-        
-
-        self.cap = cv2.VideoCapture(0)
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1080)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
-        self.t_camera = t.time()
-
         def show_frame_0():
-            _, frame = self.cap.read()
-            frame = cv2.flip(frame, 1)
-            self.cv2image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
-            img = Image.fromarray(self.cv2image)
-            imgw, imgh = img.size
-            imgtk = ImageTk.PhotoImage(image=img.crop([imgw/2-256, imgh/2-256, imgw/2+256, imgh/2+256]).resize((512,512)))
-            self.label_info_1.imgtk = imgtk
-            self.label_info_1.configure(image=imgtk)
-            img_recognizing()
-            self.label_info_1.after(10, show_frame_0)
+            if (self.cap != None):
+                _, frame = self.cap.read()
+                frame = cv2.flip(frame, 1)
+                self.cv2image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
+                img = Image.fromarray(self.cv2image)
+                imgw, imgh = img.size
+                imgtk = ImageTk.PhotoImage(image=img.crop([imgw/2-256, imgh/2-256, imgw/2+256, imgh/2+256]).resize((512,512)))
+                self.label_info_1.imgtk = imgtk
+                self.label_info_1.configure(image=imgtk)
+                img_recognizing()
+                self.label_info_1.after(10, show_frame_0)
             
-        
-
+            
         def img_recognizing():
             if(t.time()-self.t_camera > 0.5 and self.state):
                img_cropped = self.cv2image[:, 160:480,:]
@@ -337,15 +321,29 @@ class App(customtkinter.CTk):
                self.label_infot3.configure(text = label_name)
                self.t_camera = t.time()
 
-        show_frame_0()
-            
-        
-            
+        if self.button_6.state != "disabled":
+            self.label_radio_group.configure(text="Look at Camera")
+            self.label_infot1.configure(text="Camera Preview")
+            self.button_5.configure(state="normal")
+            self.button_6.configure(state="disabled")
+            self.button_7.configure(state="normal")
+            self.button_5.configure(fg_color="#1f6aa5")
+            self.button_6.configure(fg_color=None)
+            self.button_7.configure(fg_color="#1f6aa5")
+            self.button_7.configure(command=self.button_force)
+            self.label_info_1.configure(image=self.imageUNDEF)
+            self.label_info_2.configure(image=self.imageUNDEF)
 
+            self.cap = cv2.VideoCapture(0)
+            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1080)
+            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+            self.t_camera = t.time()
+            show_frame_0()
 
 
     def openTestImage(self):
         filetypes = (
+            ('Image Files', ['*.jpg', '*.png']),
             ('JPG Files', '*.jpg'),
             ('PNG Files', '*.png')
         )
