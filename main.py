@@ -19,7 +19,7 @@ class App(customtkinter.CTk):
 
     def __init__(self):
         super().__init__()
-
+        #DEKLARASI VARIABEL
         self.title("Face Recognition using Eigen Faces")
         self.geometry(f"{App.WIDTH}x{App.HEIGHT}")
         self.protocol("WM_DELETE_WINDOW", self.on_closing)  
@@ -28,7 +28,24 @@ class App(customtkinter.CTk):
         self.dataset_display = []
         self.dataset_train = np.array([])
         self.train_label = []
+
         self.imageTestGrayscale = np.ndarray(shape=(256*256))
+        self.cv2image = None
+        self.t_camera = 0
+        self.state = False
+
+        #TRAINING MODELS
+        self.eigenfaces = None
+        self.weight_training = None
+        self.avg_training = None
+        
+
+        #METRICS
+        self.euclidian_distance = 0
+        self.cos_sim = 0
+        self.label = ''
+
+
         # Terdiri atas 2 frame
 
         # Konfigurasi Awal Frame kanan dan kiri
@@ -206,12 +223,12 @@ class App(customtkinter.CTk):
         self.label_4 = customtkinter.CTkLabel(master=self.frame_input,
                                               text="PRESS START",
                                               text_font=("Roboto Medium", -8))  # font name and size in px
-        self.label_4.grid(row=12, column=0, pady=0, padx=10)
+        self.label_4.grid(row=12, column=0, pady=0, padx=5)
 
         self.label_5 = customtkinter.CTkLabel(master=self.frame_input,
                                               text="",
                                               text_font=("Roboto Medium", -8))  # font name and size in px
-        self.label_5.grid(row=13, column=0, pady=0, padx=10)
+        self.label_5.grid(row=13, column=0, pady=0, padx=5)
 
 
         # set default values
@@ -219,27 +236,37 @@ class App(customtkinter.CTk):
 
     def button_event(self):
         tic = t.time()
-        euclidian_distance, cos_sim, label = metrics_calculation(self.imageTestGrayscale,self.dataset_train,self.train_label)
+        self.euclidian_distance, self.cos_sim, self.label = metrics_calculation(self.imageTestGrayscale,self.eigenfaces,self.weight_training,self.avg_training,self.train_label)
+
         ctr = 0
         for k in self.train_label:
-            if k == label:
+            if k == self.label:
                 break
             ctr += 1
         toc = t.time()
         
         ext_time ="Execution time: " + str(toc-tic) + "s"
-        euclidian_distance = "Euclidian distance: " + str(euclidian_distance)
-        cos_sim = "Cosine Similiarity: " + str(cos_sim)
+        euclidian_distance_str = "Euclidian distance: " + "{0:.4E}".format(self.euclidian_distance)#str(euclidian_distance)
+        cos_sim_str = "Cosine Similiarity: " + str(self.cos_sim)
 
         self.label_info_2.configure(image=self.dataset_display[ctr])
-        self.label_4.configure(text = euclidian_distance)
-        self.label_5.configure(text = cos_sim)
+        self.label_4.configure(text = euclidian_distance_str)
+        self.label_5.configure(text = cos_sim_str)
         self.label_infot3.configure(text = ext_time)
         
         
 
     
+    def button_force(self):
+        self.state = True
 
+        
+        
+            
+        
+
+        
+        
     def movetoFiles(self):
         self.label_radio_group.configure(text="Input Your Files")
         self.button_5.configure(state="normal")
@@ -248,38 +275,73 @@ class App(customtkinter.CTk):
         self.button_5.configure(fg_color="#1f6aa5")
         self.button_6.configure(fg_color="#1f6aa5")
         self.button_7.configure(fg_color="#1f6aa5")
+        self.button_7.configure(command=self.button_event)
         if self.cap != None:
             self.cap.release()
             self.cap = None
         self.label_info_1.configure(image=self.imageUNDEF)
         self.label_infot1.configure(text="Your Test Image")
+        self.state = False
 
     
     def movetoCamera(self):
         self.label_radio_group.configure(text="Look at Camera")
         self.label_infot1.configure(text="Camera Preview")
-        self.button_5.configure(state="disabled")
+        self.button_5.configure(state="normal")
         self.button_6.configure(state="disabled")
-        self.button_7.configure(state="disabled")
-        self.button_5.configure(fg_color=None)
+        self.button_7.configure(state="normal")
+        self.button_5.configure(fg_color="#1f6aa5")
         self.button_6.configure(fg_color=None)
-        self.button_7.configure(fg_color=None)
+        self.button_7.configure(fg_color="#1f6aa5")
+        self.button_7.configure(command=self.button_force)
+        self.label_info_1.configure(image=self.imageUNDEF)
+        
+
         self.cap = cv2.VideoCapture(0)
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1080)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+        self.t_camera = t.time()
 
-        def show_frame():
+        def show_frame_0():
             _, frame = self.cap.read()
             frame = cv2.flip(frame, 1)
-            cv2image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
-            img = Image.fromarray(cv2image)
+            self.cv2image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
+            img = Image.fromarray(self.cv2image)
             imgw, imgh = img.size
-            imgtk = ImageTk.PhotoImage(image=img.crop([imgw/2-256, imgh/2-256, imgw/2+256, imgh/2+256]))
+            imgtk = ImageTk.PhotoImage(image=img.crop([imgw/2-256, imgh/2-256, imgw/2+256, imgh/2+256]).resize((512,512)))
             self.label_info_1.imgtk = imgtk
             self.label_info_1.configure(image=imgtk)
-            self.label_info_1.after(10, show_frame)
+            img_recognizing()
+            self.label_info_1.after(10, show_frame_0)
+            
+        
 
-        show_frame()
+        def img_recognizing():
+            if(t.time()-self.t_camera > 0.5 and self.state):
+               img_cropped = self.cv2image[:, 160:480,:]
+               self.imageTestGrayscale = norm_img(img_cropped)
+               self.euclidian_distance, self.cos_sim, self.label = metrics_calculation(self.imageTestGrayscale,self.eigenfaces,self.weight_training,self.avg_training,self.train_label)
+               ctr = 0
+               
+               for k in self.train_label:
+                   if k == self.label:
+                       break
+                   ctr += 1
+
+               label_name ="Closest Result: " +  k
+               euclidian_distance_str = "Euclidian distance: " + "{0:.4E}".format(self.euclidian_distance)#str(euclidian_distance)
+               cos_sim_str = "Cosine Similiarity: " + str(self.cos_sim)
+               self.label_info_2.configure(image=self.dataset_display[ctr])
+               self.label_4.configure(text = euclidian_distance_str)
+               self.label_5.configure(text = cos_sim_str)
+               self.label_infot3.configure(text = label_name)
+               self.t_camera = t.time()
+
+        show_frame_0()
+            
+        
+            
+
 
 
     def openTestImage(self):
@@ -296,7 +358,7 @@ class App(customtkinter.CTk):
         if filename :
             self.imageTest = ImageTk.PhotoImage((Image.open(filename)).resize((512, 512), Image.ANTIALIAS))
             self.label_info_1.configure(image=self.imageTest)
-            self.imageTestGrayscale = get_img(filename)
+            self.imageTestGrayscale = get_img_PIL(filename)
             filenameshow = ""
             lenname = len(filename)-1
             while (filename[lenname] != '/'):
@@ -326,11 +388,15 @@ class App(customtkinter.CTk):
             for itemfile in listfile:
                 self.dataset_display.append(ImageTk.PhotoImage(Image.open(filezip.open(itemfile)).resize((512, 512), Image.ANTIALIAS)))
                 x = filezip.open(itemfile)
-                pic = norm_img(np.array(Image.open(x)))
+                pic = get_img_PIL(x)
+        
                 self.dataset_train[ctr] = pic
                 ctr += 1
 
             self.train_label = listfile
+
+            # LAKUKAN TRAINING #
+            self.training_dataset()
             # self.label_info_1.configure(image=self.dataset[0])
             # self.label_info_2.configure(image=self.dataset[1])
             # filenameshow = ""
@@ -338,10 +404,18 @@ class App(customtkinter.CTk):
             # while (filename[lenname] != '/'):
             #     filenameshow = filename[lenname] + filenameshow
             #     lenname = lenname-1
+
             self.label_1i.configure(text="Zip Loaded!")
             
 
-
+    def training_dataset(self):
+        tic = t.time()
+        self.eigenfaces, self.weight_training, self.avg_training = training_parameters(self.dataset_train)
+        toc = t.time()
+        train_time ="Training time: " + str(toc-tic) + "s"
+        self.label_infot3.configure(text = train_time)
+        
+        
     def change_appearance_mode(self, new_appearance_mode):
         customtkinter.set_appearance_mode(new_appearance_mode)
 
