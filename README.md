@@ -8,7 +8,7 @@
 
 # How To Run
 1. Jalankan main.py
-2. Program dapat dijalankan melalui input file yang berupa zip dan melalui webcam
+2. Program dapat dijalankan melalui input file dan melalui webcam
 
 # Tampilan Aplikasi
 
