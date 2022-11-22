@@ -3,6 +3,7 @@ import numpy as np
 import cv2
 from time import *
 from PIL import Image
+from pengolahan_citra import *
 
 
 """
@@ -33,12 +34,12 @@ def metrics_calculation(test,eigenfaces,weight_training,avg_training,label_train
     
     for i in weight_training:
         if ctr == 0:
-            euclidian_distance = np.linalg.norm(weight_test-i)
+            euclidian_distance = norm_vector(weight_test-i)
             cos_sim = cosine_sim(weight_test,i)
             mark = 0
         else:
-            if np.linalg.norm(weight_test-i) < euclidian_distance:
-                euclidian_distance = np.linalg.norm(weight_test-i)
+            if norm_vector(weight_test-i) < euclidian_distance:
+                euclidian_distance = norm_vector(weight_test-i)
                 mark = ctr
                 cos_sim = cosine_sim(weight_test,i)
         ctr += 1
@@ -47,53 +48,53 @@ def metrics_calculation(test,eigenfaces,weight_training,avg_training,label_train
     return euclidian_distance, cos_sim, label_training[mark]
 
 """
-******************************************************************************
------------------------------KAKAS PENGOLAHAN CITRA---------------------------
-******************************************************************************
-"""
+# ******************************************************************************
+# -----------------------------KAKAS PENGOLAHAN CITRA---------------------------
+# ******************************************************************************
+# """
 
-def labelimg(dir):
-    label = []
-    res = os.listdir(dir)
-    for k in res:
-        label.append(k.replace('.jpg',''))
-    return label
+# def labelimg(dir):
+#     label = []
+#     res = os.listdir(dir)
+#     for k in res:
+#         label.append(k.replace('.jpg',''))
+#     return label
 
-def norm_img(image):
-    dim = (256,256)
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    resized = cv2.resize(gray, dim, interpolation = cv2.INTER_AREA)
-    return resized.reshape(256*256)
+# def norm_img(image):
+#     dim = (256,256)
+#     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+#     resized = cv2.resize(gray, dim, interpolation = cv2.INTER_AREA)
+#     return resized.reshape(256*256)
 
-def get_img(img):
-    dim = (256, 256)
-    image = cv2.imread(img)
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    resized = cv2.resize(gray, dim, interpolation = cv2.INTER_AREA)
-    return resized.reshape(256*256)
+# def get_img(img):
+#     dim = (256, 256)
+#     image = cv2.imread(img)
+#     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+#     resized = cv2.resize(gray, dim, interpolation = cv2.INTER_AREA)
+#     return resized.reshape(256*256)
 
-def get_img_PIL(img):
-    theImg = norm_img(np.array(Image.open(img)))
-    return theImg
+# def get_img_PIL(img):
+#     theImg = norm_img(np.array(Image.open(img)))
+#     return theImg
     
 
-def set_training(dir):
-    res = os.listdir(dir)
-    training = np.ndarray(shape=(len(res),256*256))
-    ctr = 0
-    for k in res:
-        image = cv2.imread(dir+'\\'+k)
-        rshp = norm_img(image)
-        training[ctr] = rshp
-        ctr += 1
-    return training
+# def set_training(dir):
+#     res = os.listdir(dir)
+#     training = np.ndarray(shape=(len(res),256*256))
+#     ctr = 0
+#     for k in res:
+#         image = cv2.imread(dir+'\\'+k)
+#         rshp = norm_img(image)
+#         training[ctr] = rshp
+#         ctr += 1
+#     return training
 
-def avg_image(training_set):
-    s = np.zeros((256*256))
-    for k in range(training_set.shape[0]):
-        s = s + training_set[k]
+# def avg_image(training_set):
+#     s = np.zeros((256*256))
+#     for k in range(training_set.shape[0]):
+#         s = s + training_set[k]
     
-    return s/(training_set.shape[0])
+#     return s/(training_set.shape[0])
 
 """
 ******************************************************************************
@@ -122,9 +123,9 @@ def theEigen(M,iterasi):
 
     return Y.diagonal(),vec 
 
-def get_eigenfaces(eigenvectors,n,training_tensor):
-    reduced_data = np.array(eigenvectors[:n]).transpose()
-    eigenface = np.dot(training_tensor.T,reduced_data)
+def get_eigenfaces(eigenvectors,n,training_set):
+    reduced_data = np.array(eigenvectors[:n]).T
+    eigenface = np.dot(training_set.T,reduced_data)
     return eigenface.T
 
 
@@ -143,7 +144,7 @@ def proj(u, v):
     return proj_of_u_on_v
 
 def cosine_sim(a,b):
-    return abs(np.dot(a,b)/(np.linalg.norm(a)*np.linalg.norm(b)))
+    return abs(np.dot(a,b)/(norm_vector(a)*norm_vector(b)))
 
 def QR_decomposition(M, type='float64'):
     
@@ -158,14 +159,14 @@ def QR_decomposition(M, type='float64'):
             R[i,k] = np.transpose(Q[:,i]).dot(Q[:,k])
             Q[:,k] = Q[:,k] - R[i,k] * Q[:,i]
 
-        R[k,k] = np.linalg.norm(Q[:,k]); Q[:,k] = Q[:,k] / R[k,k]
+        R[k,k] = norm_vector(Q[:,k]); Q[:,k] = Q[:,k] / R[k,k]
     
     return -Q, -R   
 
 
-
-
-
+def norm_vector(v):
+    return np.sqrt(np.sum(np.power(v,2)))
+    #JIKA PAKAI FOR LOOP, TIDAK EFISIEN WAKTU
 
 
 

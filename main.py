@@ -4,7 +4,7 @@ import customtkinter
 from PIL import ImageTk, Image
 from tkinter import filedialog as fd
 import cv2 
-from backend.calculate import *
+from backend import *
 import zipfile
 import time as t
 
@@ -162,7 +162,8 @@ class App(customtkinter.CTk):
         self.frame_input.rowconfigure(4, weight=1)
         self.frame_input.rowconfigure(8, weight=1)
         self.frame_input.rowconfigure(10, weight=1)
-        self.frame_input.rowconfigure(13, weight=3)
+        self.frame_input.rowconfigure(13, weight=0)
+       
         self.label_radio_group = customtkinter.CTkLabel(master=self.frame_input,
                                                         text="Input Your Photo",
                                                         text_font=("Roboto Medium", -20))
@@ -221,12 +222,12 @@ class App(customtkinter.CTk):
         self.label_3.grid(row=11, column=0, pady=0, padx=10)
         
         self.label_4 = customtkinter.CTkLabel(master=self.frame_input,
-                                              text="PRESS START",
+                                              text="???",
                                               text_font=("Roboto Medium", -8))  # font name and size in px
-        self.label_4.grid(row=12, column=0, pady=0, padx=5)
+        self.label_4.grid(row=12, column=0, pady=0, padx=5, )
 
         self.label_5 = customtkinter.CTkLabel(master=self.frame_input,
-                                              text="",
+                                              text="???",
                                               text_font=("Roboto Medium", -8))  # font name and size in px
         self.label_5.grid(row=13, column=0, pady=0, padx=5)
 
@@ -248,6 +249,7 @@ class App(customtkinter.CTk):
         ext_time ="Execution time: " + str(toc-tic) + "s"
         euclidian_distance_str = "Euclidian distance: " + "{0:.4E}".format(self.euclidian_distance)#str(euclidian_distance)
         cos_sim_str = "Cosine Similiarity: " + str(self.cos_sim)
+        
 
         self.label_info_2.configure(image=self.dataset_display[ctr])
         self.label_4.configure(text = euclidian_distance_str)
@@ -302,7 +304,7 @@ class App(customtkinter.CTk):
             
         def img_recognizing():
             if(t.time()-self.t_camera > 0.5 and self.state):
-               img_cropped = self.cv2image[:, 160:480,:]
+               img_cropped = self.cv2image[:, 160:480,:] #ambil gambar dari webcam
                self.imageTestGrayscale = norm_img(img_cropped)
                self.euclidian_distance, self.cos_sim, self.label = metrics_calculation(self.imageTestGrayscale,self.eigenfaces,self.weight_training,self.avg_training,self.train_label)
                ctr = 0
@@ -315,10 +317,22 @@ class App(customtkinter.CTk):
                label_name ="Closest Result: " +  k
                euclidian_distance_str = "Euclidian distance: " + "{0:.4E}".format(self.euclidian_distance)#str(euclidian_distance)
                cos_sim_str = "Cosine Similiarity: " + str(self.cos_sim)
-               self.label_info_2.configure(image=self.dataset_display[ctr])
-               self.label_4.configure(text = euclidian_distance_str)
-               self.label_5.configure(text = cos_sim_str)
-               self.label_infot3.configure(text = label_name)
+               if(self.euclidian_distance < 1.1e8):
+                self.label_info_2.configure(image=self.dataset_display[ctr])
+                self.label_4.configure(text = euclidian_distance_str)
+                self.label_5.configure(text = cos_sim_str)
+                self.label_infot3.configure(text = label_name)
+                
+               elif(self.euclidian_distance < 1.5e8):
+                self.label_info_2.configure(image=self.dataset_display[ctr])
+                self.label_4.configure(text = euclidian_distance_str)
+                self.label_5.configure(text = cos_sim_str)
+                self.label_infot3.configure(text = label_name + "(?)")
+               else:
+                self.label_info_2.configure(image=self.imageUNDEF)
+                self.label_4.configure(text = euclidian_distance_str)
+                self.label_5.configure(text = cos_sim_str)
+                self.label_infot3.configure(text = "Euclidian distance diatas ambang. Pastikan posisi anda benar!")
                self.t_camera = t.time()
 
         if self.button_6.state != "disabled":
