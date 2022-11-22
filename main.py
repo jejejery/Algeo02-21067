@@ -23,7 +23,7 @@ class App(customtkinter.CTk):
         self.title("Face Recognition using Eigen Faces")
         self.geometry(f"{App.WIDTH}x{App.HEIGHT}")
         self.protocol("WM_DELETE_WINDOW", self.on_closing)  
-        self.testImage = None
+        self.imageTest = None
         self.cap = None
         self.dataset_display = []
         self.dataset_train = np.array([])
@@ -162,7 +162,7 @@ class App(customtkinter.CTk):
         self.frame_input.rowconfigure(4, weight=1)
         self.frame_input.rowconfigure(8, weight=1)
         self.frame_input.rowconfigure(10, weight=1)
-        self.frame_input.rowconfigure(13, weight=3)
+        self.frame_input.rowconfigure(14, weight=3)
         self.label_radio_group = customtkinter.CTkLabel(master=self.frame_input,
                                                         text="Input Your Photo",
                                                         text_font=("Roboto Medium", -20))
@@ -230,44 +230,51 @@ class App(customtkinter.CTk):
                                               text_font=("Roboto Medium", -8))  # font name and size in px
         self.label_5.grid(row=13, column=0, pady=0, padx=5)
 
+        self.label_6 = customtkinter.CTkLabel(master=self.frame_input,
+                                              text="",
+                                              text_font=("Roboto Medium", -8))  # font name and size in px
+        self.label_6.grid(row=14, column=0, pady=0, padx=5)
+
 
         # set default values
         self.optionmenu_1.set("Dark")
 
     def button_event(self):
-        tic = t.time()
-        self.euclidian_distance, self.cos_sim, self.label = metrics_calculation(self.imageTestGrayscale,self.eigenfaces,self.weight_training,self.avg_training,self.train_label)
+        if self.dataset_display != [] and self.imageTest != None:
+            tic = t.time()
+            self.euclidian_distance, self.cos_sim, self.label = metrics_calculation(self.imageTestGrayscale,self.eigenfaces,self.weight_training,self.avg_training,self.train_label)
 
-        ctr = 0
-        for k in self.train_label:
-            if k == self.label:
-                break
-            ctr += 1
-        toc = t.time()
-        
-        ext_time ="Execution time: " + str(toc-tic) + "s"
-        euclidian_distance_str = "Euclidian distance: " + "{0:.4E}".format(self.euclidian_distance)#str(euclidian_distance)
-        cos_sim_str = "Cosine Similiarity: " + str(self.cos_sim)
+            ctr = 0
+            for k in self.train_label:
+                if k == self.label:
+                    break
+                ctr += 1
+            toc = t.time()
+            
+            ext_time ="Execution time: " + str(toc-tic) + "s"
+            euclidian_distance_str = "Euclidian distance: " + "{0:.4E}".format(self.euclidian_distance)#str(euclidian_distance)
+            cos_sim_str = "Cosine Similiarity: " + str(self.cos_sim)
 
-        self.label_info_2.configure(image=self.dataset_display[ctr])
-        self.label_4.configure(text = euclidian_distance_str)
-        self.label_5.configure(text = cos_sim_str)
-        self.label_infot3.configure(text = ext_time)
-        
-        
+            self.label_info_2.configure(image=self.dataset_display[ctr])
+            self.label_4.configure(text = euclidian_distance_str)
+            self.label_5.configure(text = cos_sim_str)
+            self.label_infot3.configure(text = ext_time)
 
+        if self.dataset_display == [] and self.imageTest != None:
+            self.label_infot3.configure(text = "Masukkan dataset sebelum start!")
+        elif self.dataset_display != [] and self.imageTest == None:
+            self.label_infot3.configure(text = "Masukkan test image sebelum start!")
+        elif self.dataset_display == [] and self.imageTest == None:
+            self.label_infot3.configure(text = "Masukkan dataset dan test image sebelum start!")
     
     def button_force(self):
-        self.state = True
-
-        
-        
-            
-        
-
-        
+        if self.dataset_display == []:
+            self.label_infot3.configure(text = "Masukkan dataset sebelum start!")
+        else:
+            self.state = True
         
     def movetoFiles(self):
+        self.imageTest = None
         self.label_radio_group.configure(text="Input Your Files")
         self.button_5.configure(state="normal")
         self.button_6.configure(state="normal")
@@ -276,6 +283,7 @@ class App(customtkinter.CTk):
         self.button_6.configure(fg_color="#1f6aa5")
         self.button_7.configure(fg_color="#1f6aa5")
         self.button_7.configure(command=self.button_event)
+        self.label_2i.configure(text="No Test File Found")
         if self.cap != None:
             self.cap.release()
             self.cap = None
@@ -283,6 +291,13 @@ class App(customtkinter.CTk):
         self.label_info_2.configure(image=self.imageUNDEF)
         self.label_infot1.configure(text="Your Test Image")
         self.state = False
+        self.dataset_display = []
+        self.label_4.configure(text = "PRESS START")
+        self.label_1i.configure(text="No Dataset(s) Found")
+        self.label_4.configure(text = "PRESS START")
+        self.label_2i.configure(text="No Test File Found")
+        self.label_5.configure(text = "")
+        self.label_infot3.configure(text = "Execution time: ")
 
     
     def movetoCamera(self):
@@ -296,8 +311,11 @@ class App(customtkinter.CTk):
                 imgtk = ImageTk.PhotoImage(image=img.crop([imgw/2-256, imgh/2-256, imgw/2+256, imgh/2+256]).resize((512,512)))
                 self.label_info_1.imgtk = imgtk
                 self.label_info_1.configure(image=imgtk)
-                img_recognizing()
+                if (self.dataset_display != []):
+                    img_recognizing()
                 self.label_info_1.after(10, show_frame_0)
+                if self.dataset_display == []:
+                    self.state = False
             
             
         def img_recognizing():
@@ -321,6 +339,14 @@ class App(customtkinter.CTk):
                self.label_infot3.configure(text = label_name)
                self.t_camera = t.time()
 
+        self.dataset_display = []
+        self.label_4.configure(text = "PRESS START")
+        self.label_1i.configure(text="No Dataset(s) Found")
+        self.label_2i.configure(text="Look At Camera")
+        self.label_4.configure(text = "PRESS START")
+        self.label_5.configure(text = "")
+        self.label_infot3.configure(text = "Closest Result: ")
+        self.label_info_2.configure(image=self.imageUNDEF)
         if self.button_6.state != "disabled":
             self.label_radio_group.configure(text="Look at Camera")
             self.label_infot1.configure(text="Camera Preview")
@@ -342,6 +368,11 @@ class App(customtkinter.CTk):
 
 
     def openTestImage(self):
+        self.state = False
+        self.label_info_2.configure(image=self.imageUNDEF)
+        self.label_4.configure(text = "PRESS START")
+        self.label_5.configure(text = "")
+        self.label_infot3.configure(text = "Execution time: ")
         filetypes = (
             ('Image Files', ['*.jpg', '*.png']),
             ('JPG Files', '*.jpg'),
@@ -365,6 +396,16 @@ class App(customtkinter.CTk):
             self.label_2i.configure(text=filenameshow)
     
     def openDataset(self):
+        
+        self.dataset_display = []
+        self.label_info_2.configure(image=self.imageUNDEF)
+        self.label_4.configure(text = "PRESS START")
+        self.label_1i.configure(text="No Dataset(s) Found")
+        self.label_5.configure(text = "")
+        if self.cap == None:
+            self.label_infot3.configure(text = "Execution time: ")
+        else:
+            self.label_infot3.configure(text = "Closest Result: ")
         filetypes = (
             ('ZIP Files', '*.zip'),
         )
