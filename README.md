@@ -29,6 +29,10 @@
 ![image](https://user-images.githubusercontent.com/92136335/203334711-805cf38e-98c3-4744-a60d-86300a33389d.png)
 
 ## Melalui input test image
+
+<p align="center">
+  <img src="public/result.jpg" title="result">
+</p>
 1. Masukkan dataset
 2. Tekan tombol start
 3. Gambar terdekat akan muncul
