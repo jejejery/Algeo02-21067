@@ -33,6 +33,3 @@
 2. Tekan tombol start
 3. Gambar terdekat akan muncul
 
-![image](https://user-images.githubusercontent.com/92136335/203334617-a4e28ce4-50f3-44a9-b7c6-6b8fcdf144ba.png)
-
-
