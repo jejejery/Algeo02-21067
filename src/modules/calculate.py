@@ -26,6 +26,7 @@ def training_parameters(training):
     eigenvec = np.array([k/norm_vector(k) for k in eigenvec]) #normalisasi vektor eigen
     x = int(training.shape[0]*0.75)
     eigfaces = np.array(get_eigenfaces(eigenvec,x,training)) #75% eigenface pertama
+    eigfaces = np.array([k/norm_vector(k) for k in eigfaces])
     weight_training = get_weight(eigfaces,A)
 
     return eigfaces, weight_training, avg
